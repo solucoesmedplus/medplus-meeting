@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>💬 Chat Interno + Reuniões</title>
+  <link rel="shortcut icon" href="https://blogger.googleusercontent.com/img/a/AVvXsEhG6xTUDY6ZiRkxBu4YVLlOiI_4rt9vtKSzXCexntmDmXl3J8Em_QpkxAIWZmRSnn5NNIhMQiSlpj1GyxVvtO0t3zSkyvAZQOa16iEDbc_iDLCM2tX1AZcB3m97eO2z5bIVBqqaIS6mNKhGMHmtU3r_lrizrwLCnifsVBbiiunkt8030BeUKrf_qId0mvIJ=w400-h400" type="image/x-icon">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- TELA DE LOGIN / CADASTRO -->
+  <section id="authScreen" class="auth-screen">
+    <div class="auth-card">
+      <div class="brand">
+        <div class="brand-icon">💬</div>
+        <div>
+          <h1>Chat Interno</h1>
+          <p>Mensagens, áudio e vídeo para sua empresa</p>
+        </div>
+      </div>
+
+      <div id="configAlert" class="config-alert hidden">
+        Configure sua URL e sua chave anon do Supabase no arquivo <strong>script.js</strong>.
+      </div>
+
+      <div class="tabs">
+        <button id="tabLogin" class="tab active" type="button">Entrar</button>
+        <button id="tabCadastro" class="tab" type="button">Cadastrar</button>
+      </div>
+
+      <form id="loginForm" class="form">
+        <label>E-mail</label>
+        <input id="loginEmail" type="email" placeholder="seuemail@empresa.com" required />
+
+        <label>Senha</label>
+        <input id="loginSenha" type="password" placeholder="Digite sua senha" required />
+
+        <button class="btn primary" type="submit">Entrar no sistema</button>
+      </form>
+
+      <form id="cadastroForm" class="form hidden">
+        <label>Nome</label>
+        <input id="cadastroNome" type="text" placeholder="Seu nome completo" required />
+
+        <label>E-mail</label>
+        <input id="cadastroEmail" type="email" placeholder="seuemail@empresa.com" required />
+
+        <label>Senha</label>
+        <input id="cadastroSenha" type="password" placeholder="Mínimo de 6 caracteres" required minlength="6" />
+
+        <button class="btn primary" type="submit">Criar usuário</button>
+      </form>
+
+      <p class="auth-help">
+        Sistema otimizado para desktop e mobile, com chat interno, grupos, usuários e reuniões.
+      </p>
+    </div>
+  </section>
+
+  <!-- SISTEMA -->
+  <main id="appScreen" class="app hidden">
+    <header class="topbar">
+      <div class="topbar-brand">
+        <div class="brand-icon small">💬</div>
+        <div>
+          <strong>Chat Interno</strong>
+          <span id="usuarioLogado">Carregando...</span>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <button id="btnAdmin" class="btn admin hidden" type="button">⚙️ Admin</button>
+        <button id="btnAtualizarUsuarios" class="btn ghost" type="button">Atualizar</button>
+        <button id="btnSair" class="btn danger" type="button">Sair</button>
+      </div>
+    </header>
+
+    <section class="layout">
+      <!-- COLUNA DE USUÁRIOS E GRUPOS -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h2>Conversas</h2>
+          <span id="totalUsuarios" class="badge">0</span>
+        </div>
+
+        <input id="buscarUsuario" class="search" type="text" placeholder="Pesquisar usuário ou grupo..." />
+
+        <div class="sidebar-section-title">
+          <span>Usuários</span>
+          <small id="contadorUsuarios">0</small>
+        </div>
+        <div id="usuariosLista" class="users-list compact-list">
+          <div class="empty">Nenhum usuário encontrado.</div>
+        </div>
+
+        <div class="sidebar-section-title sidebar-section-title-actions">
+          <span>Grupos</span>
+          <div class="sidebar-title-actions">
+            <button id="btnNovoGrupo" class="mini-btn mini-btn-plus" type="button">+ Grupo</button>
+            <small id="totalGrupos">0</small>
+          </div>
+        </div>
+        <div id="gruposLista" class="users-list compact-list">
+          <div class="empty">Nenhum grupo encontrado.</div>
+        </div>
+      </aside>
+
+      <!-- ÁREA DO CHAT -->
+      <section class="chat">
+        <div class="chat-header">
+          <div>
+            <h2 id="chatTitulo">Selecione um usuário</h2>
+            <p id="chatSubtitulo">Clique em um usuário à esquerda para iniciar uma conversa.</p>
+          </div>
+
+          <div class="chat-header-actions">
+            <button id="btnAbrirLousa" class="btn board" type="button" disabled>
+              📝 Lousa
+            </button>
+            <button id="btnIniciarReuniao" class="btn meet" type="button" disabled>
+              📹 Iniciar reunião
+            </button>
+          </div>
+        </div>
+
+        <div id="mensagensLista" class="messages">
+          <div class="welcome">
+            <h3>Bem-vindo 👋</h3>
+            <p>Escolha um usuário para começar a conversar.</p>
+          </div>
+        </div>
+
+        <form id="mensagemForm" class="message-form">
+          <input id="mensagemTexto" type="text" placeholder="Digite uma mensagem..." autocomplete="off" disabled />
+          <button id="btnEnviarMensagem" class="btn primary" type="submit" disabled>Enviar</button>
+        </form>
+      </section>
+
+
+      <!-- PAINEL DA LOUSA DE ANOTAÇÕES -->
+      <aside id="lousaPanel" class="lousa-panel hidden">
+        <div class="lousa-header">
+          <div>
+            <h2>Lousa de Anotações</h2>
+            <p id="lousaContexto">Anotações gerais disponíveis para todos os usuários.</p>
+          </div>
+
+          <button id="btnFecharLousa" class="btn danger" type="button">Fechar</button>
+        </div>
+
+        <div class="lousa-toolbar">
+          <button id="btnNovaLousa" class="btn ghost" type="button">+ Nova</button>
+          <button id="btnSalvarLousa" class="btn primary" type="button" disabled>Salvar</button>
+          <button id="btnLimparLousa" class="btn ghost" type="button" disabled>Limpar</button>
+          <button id="btnExcluirLousa" class="btn danger" type="button" disabled>Excluir</button>
+        </div>
+
+        <div class="lousa-body">
+          <label for="lousaSelect">Trocar de anotação</label>
+          <select id="lousaSelect" class="lousa-select" disabled>
+            <option value="">Nenhuma anotação</option>
+          </select>
+
+          <label for="lousaTitulo">Título</label>
+          <input id="lousaTitulo" type="text" placeholder="Ex.: Pendências da reunião" disabled />
+
+          <div id="lousaAutores" class="lousa-autores">
+            <span>Criado por: <strong id="lousaCriadoPor">-</strong></span>
+            <span>Atualizado por: <strong id="lousaAtualizadoPor">-</strong></span>
+          </div>
+
+          <label for="lousaTexto">Anotações</label>
+          <textarea id="lousaTexto" placeholder="Escreva suas anotações aqui..." disabled></textarea>
+
+          <div class="lousa-status">
+            <span id="lousaStatus">Abra uma conversa para usar a lousa.</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- PAINEL DA REUNIÃO -->
+      <aside id="meetingPanel" class="meeting-panel hidden">
+        <div class="meeting-header">
+          <div>
+            <h2>Reunião</h2>
+            <p id="meetingRoomName">Sala Jitsi</p>
+          </div>
+
+          <button id="btnFecharReuniao" class="btn danger" type="button">Fechar</button>
+        </div>
+
+        <div id="meet" class="meet-box"></div>
+      </aside>
+    </section>
+
+    <!-- NAVEGAÇÃO MOBILE -->
+    <nav class="mobile-nav" aria-label="Navegação mobile">
+      <button id="mobileTabConversas" class="mobile-nav-btn active" type="button" data-mobile-view="conversas">
+        <span>💬</span>
+        <strong>Conversas</strong>
+      </button>
+      <button id="mobileTabChat" class="mobile-nav-btn" type="button" data-mobile-view="chat">
+        <span>🗨️</span>
+        <strong>Chat</strong>
+      </button>
+      <button id="mobileTabLousa" class="mobile-nav-btn" type="button" data-mobile-view="lousa">
+        <span>📝</span>
+        <strong>Lousa</strong>
+      </button>
+      <button id="mobileTabReuniao" class="mobile-nav-btn" type="button" data-mobile-view="reuniao">
+        <span>📹</span>
+        <strong>Reunião</strong>
+      </button>
+      <button id="mobileTabAdmin" class="mobile-nav-btn hidden" type="button" data-mobile-view="admin">
+        <span>⚙️</span>
+        <strong>Admin</strong>
+      </button>
+    </nav>
+  </main>
+
+
+  <!-- MODAL ADMINISTRATIVO -->
+  <section id="adminModal" class="modal-overlay hidden">
+    <div class="admin-modal">
+      <div class="modal-header">
+        <div>
+          <h2>Painel Administrativo</h2>
+          <p>Gerencie usuários, setores e grupos internos.</p>
+        </div>
+        <button id="btnFecharAdmin" class="btn danger" type="button">Fechar</button>
+      </div>
+
+      <div class="admin-tabs">
+        <button id="adminTabUsuarios" class="admin-tab active" type="button">Usuários</button>
+        <button id="adminTabSetores" class="admin-tab" type="button">Setores e Grupos</button>
+      </div>
+
+      <div id="adminUsuariosPainel" class="admin-panel">
+        <div class="admin-grid">
+          <div class="admin-card table-card">
+            <div class="admin-card-header">
+              <h3>Usuários cadastrados</h3>
+              <button id="btnAtualizarAdminUsuarios" class="btn ghost" type="button">Atualizar</button>
+            </div>
+            <div class="table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>E-mail</th>
+                    <th>Cargo</th>
+                    <th>Setor</th>
+                    <th>Status</th>
+                    <th>Ação</th>
+                  </tr>
+                </thead>
+                <tbody id="adminUsuariosTabela">
+                  <tr><td colspan="6">Carregando...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="admin-card form-card">
+            <h3>Editar usuário</h3>
+            <p id="adminUsuarioSelecionadoInfo" class="muted">Selecione um usuário na tabela.</p>
+
+            <form id="adminUsuarioForm" class="admin-form">
+              <input id="adminUsuarioId" type="hidden" />
+
+              <label>Nome</label>
+              <input id="adminUsuarioNome" type="text" placeholder="Nome do usuário" disabled />
+
+              <label>Cargo</label>
+              <input id="adminUsuarioCargo" type="text" placeholder="Ex: Atendente, Supervisor, Técnico" disabled />
+
+              <label>Setor</label>
+              <select id="adminUsuarioSetor" disabled>
+                <option value="">Sem setor</option>
+              </select>
+
+              <label class="check-line">
+                <input id="adminUsuarioAdmin" type="checkbox" disabled />
+                <span>Usuário ADMIN</span>
+              </label>
+
+              <label class="check-line">
+                <input id="adminUsuarioAtivo" type="checkbox" disabled />
+                <span>Usuário ativo</span>
+              </label>
+
+              <div class="form-actions">
+                <button id="btnSalvarAdminUsuario" class="btn primary" type="submit" disabled>Salvar usuário</button>
+                <button id="btnLimparAdminUsuario" class="btn ghost" type="button">Limpar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div id="adminSetoresPainel" class="admin-panel hidden">
+        <div class="admin-grid two">
+          <div class="admin-card form-card">
+            <h3>Cadastrar / editar setor</h3>
+            <form id="adminSetorForm" class="admin-form">
+              <input id="adminSetorId" type="hidden" />
+
+              <label>Nome do setor</label>
+              <input id="adminSetorNome" type="text" placeholder="Ex: Suporte Técnico" />
+
+              <label class="check-line">
+                <input id="adminSetorAtivo" type="checkbox" checked />
+                <span>Setor ativo</span>
+              </label>
+
+              <div class="form-actions">
+                <button class="btn primary" type="submit">Salvar setor</button>
+                <button id="btnLimparSetor" class="btn ghost" type="button">Novo setor</button>
+              </div>
+            </form>
+
+            <hr class="soft-line" />
+
+            <h3>Grupos por setor</h3>
+            <p class="muted">Depois de vincular usuários aos setores, clique abaixo para criar ou atualizar os grupos automaticamente.</p>
+            <button id="btnSincronizarGrupos" class="btn meet" type="button">Sincronizar grupos dos setores</button>
+            <div id="adminGruposResultado" class="sync-result"></div>
+          </div>
+
+          <div class="admin-card table-card">
+            <div class="admin-card-header">
+              <h3>Setores cadastrados</h3>
+              <button id="btnAtualizarSetores" class="btn ghost" type="button">Atualizar</button>
+            </div>
+            <div id="adminSetoresLista" class="setores-list">
+              <div class="empty">Nenhum setor encontrado.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- MODAL NOVO GRUPO -->
+  <section id="grupoModal" class="modal-overlay hidden">
+    <div class="grupo-modal">
+      <div class="modal-header">
+        <div>
+          <h2>Criar conversa em grupo</h2>
+          <p>Escolha um nome para o grupo e selecione os participantes.</p>
+        </div>
+        <button id="btnFecharGrupoModal" class="btn danger" type="button">Fechar</button>
+      </div>
+
+      <form id="grupoForm" class="admin-form grupo-form">
+        <label>Nome do grupo</label>
+        <input id="grupoNome" type="text" placeholder="Ex: Equipe Plantão, Projeto RX, Supervisores" required />
+
+        <label>Pesquisar participantes</label>
+        <input id="grupoBuscaUsuario" type="text" placeholder="Digite nome, e-mail, cargo ou setor..." />
+
+        <div class="grupo-list-header">
+          <strong>Participantes</strong>
+          <span id="grupoSelecionadosInfo">0 selecionado(s)</span>
+        </div>
+
+        <div id="grupoUsuariosLista" class="grupo-users-list">
+          <div class="empty">Carregando usuários...</div>
+        </div>
+
+        <div class="grupo-note">
+          Você sempre será incluído automaticamente como participante do grupo.
+        </div>
+
+        <div class="form-actions">
+          <button id="btnCriarGrupo" class="btn primary" type="submit">Criar grupo</button>
+          <button id="btnCancelarGrupo" class="btn ghost" type="button">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+
+  <!-- MODAL USUÁRIO INATIVO / BLOQUEADO -->
+  <section id="bloqueioModal" class="modal-overlay hidden">
+    <div class="bloqueio-modal">
+      <div class="blocked-icon">🔒</div>
+      <h2>Acesso bloqueado</h2>
+      <p id="bloqueioMensagem">
+        Seu usuário está inativo. Procure o administrador do sistema.
+      </p>
+      <button id="btnBloqueioOk" class="btn primary" type="button">Entendi</button>
+    </div>
+  </section>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://meet.jit.si/external_api.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
